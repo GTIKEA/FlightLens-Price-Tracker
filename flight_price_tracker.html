@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FlightLens — Price Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ─── TOKENS ────────────────────────────────────────── */
+:root{
+  --bg0:#07090f;--bg1:#0d1121;--bg2:#111827;--bg3:#1a2235;--bg4:#1e2d44;
+  --border:rgba(59,130,246,.12);--border2:rgba(59,130,246,.28);
+  --blue:#3b82f6;--blue2:#60a5fa;--blue3:#93c5fd;
+  --amber:#f59e0b;--amber2:#fbbf24;
+  --green:#10b981;--red:#ef4444;--purple:#8b5cf6;
+  --t0:#f1f5f9;--t1:#cbd5e1;--t2:#94a3b8;--t3:#475569;
+  --mono:'JetBrains Mono',monospace;
+  --head:'Rajdhani',sans-serif;
+  --body:'Outfit',sans-serif;
+  --glow:0 0 24px rgba(59,130,246,.35);
+  --r:12px;--tr:.22s cubic-bezier(.4,0,.2,1);
+}
+[data-theme=light]{
+  --bg0:#eef2ff;--bg1:#fff;--bg2:#f8faff;--bg3:#eef2ff;--bg4:#e0e7ff;
+  --border:rgba(79,70,229,.12);--border2:rgba(79,70,229,.3);
+  --blue:#4f46e5;--blue2:#6366f1;--blue3:#818cf8;
+  --t0:#0f172a;--t1:#1e293b;--t2:#475569;--t3:#94a3b8;
+  --glow:0 4px 24px rgba(79,70,229,.15);
+}
+
+/* ─── RESET ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--bg0);color:var(--t0);min-height:100vh;overflow-x:hidden;line-height:1.6;transition:background .3s,color .3s}
+
+/* ─── GRID BG ────────────────────────────────────────── */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,.025)1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.025)1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+
+/* ─── TICKER ─────────────────────────────────────────── */
+.ticker{background:var(--bg1);border-bottom:1px solid var(--border);overflow:hidden;height:34px;display:flex;align-items:center;position:relative;z-index:20}
+.ticker-pill{flex-shrink:0;background:var(--blue);color:#fff;font-family:var(--head);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:0 14px;height:100%;display:flex;align-items:center}
+.ticker-wrap{overflow:hidden;flex:1}
+.ticker-inner{display:flex;animation:roll 32s linear infinite;width:max-content}
+.ticker-inner:hover{animation-play-state:paused}
+.t-item{display:flex;align-items:center;gap:8px;padding:0 24px;font-family:var(--mono);font-size:11.5px;border-right:1px solid var(--border);white-space:nowrap}
+.t-item .ri{color:var(--t2);font-size:10px}
+.t-item .pr{color:var(--t0);font-weight:500}
+.up{color:var(--red)} .dn{color:var(--green)}
+@keyframes roll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ─── NAVBAR ─────────────────────────────────────────── */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,9,15,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border);padding:0 1.75rem;height:58px;display:flex;align-items:center;justify-content:space-between;gap:1rem;transition:background .3s}
+[data-theme=light] nav{background:rgba(238,242,255,.88)}
+.logo{font-family:var(--head);font-size:21px;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:9px;text-decoration:none;color:inherit}
+.logo-sq{width:29px;height:29px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:var(--glow);transition:transform .2s}
+.logo:hover .logo-sq{transform:rotate(-8deg) scale(1.1)}
+.logo-txt{background:linear-gradient(120deg,var(--blue2),var(--amber2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-r{display:flex;align-items:center;gap:8px}
+.nb{background:none;border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:var(--body);font-size:12.5px;padding:5px 13px;cursor:pointer;transition:all var(--tr);display:flex;align-items:center;gap:5px}
+.nb:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue2)}
+.nb.danger{border-color:rgba(239,68,68,.3)} .nb.danger:hover{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08)}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border2);background:none;color:var(--t1);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all var(--tr)}
+.icon-btn:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue2)}
+.kbd{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;color:var(--t2)}
+
+/* ─── LAYOUT ─────────────────────────────────────────── */
+.wrap{max-width:1300px;margin:0 auto;padding:1.75rem 1.5rem 5rem;position:relative;z-index:1}
+
+/* ─── HERO ───────────────────────────────────────────── */
+.hero{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.75rem;animation:fadeUp .5s ease both}
+.hero-l h1{font-family:var(--head);font-size:34px;font-weight:700;letter-spacing:.02em;line-height:1.1;margin-bottom:5px}
+.hero-l p{color:var(--t2);font-size:13.5px}
+.live-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:6px}
+.live-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.6)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ─── ROUTE PILLS ────────────────────────────────────── */
+.route-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.75rem;animation:fadeUp .5s .1s ease both}
+.rp{background:var(--bg2);border:1px solid var(--border2);border-radius:40px;padding:7px 16px;font-family:var(--head);font-size:14px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all var(--tr);display:flex;align-items:center;gap:7px;color:var(--t1)}
+.rp:hover{border-color:var(--blue);color:var(--blue2);background:var(--bg3)}
+.rp.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:var(--glow)}
+.rp .rp-price{font-family:var(--mono);font-size:11px;opacity:.75}
+
+/* ─── STAT CARDS ─────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.75rem;animation:fadeUp .5s .15s ease both}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}}
+.sc{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1.25rem;transition:all var(--tr);cursor:default;position:relative;overflow:hidden}
+.sc::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.04),transparent);opacity:0;transition:opacity var(--tr)}
+.sc:hover{border-color:var(--border2);box-shadow:var(--glow2,0 4px 20px rgba(59,130,246,.1));transform:translateY(-2px)}
+.sc:hover::after{opacity:1}
+.sc-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.sc-label .icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.ic-blue{background:rgba(59,130,246,.15);color:var(--blue2)} .ic-green{background:rgba(16,185,129,.15);color:var(--green)} .ic-amber{background:rgba(245,158,11,.15);color:var(--amber2)} .ic-red{background:rgba(239,68,68,.15);color:var(--red)}
+.sc-val{font-family:var(--head);font-size:30px;font-weight:700;letter-spacing:.01em;line-height:1}
+.sc-sub{font-size:11.5px;color:var(--t2);margin-top:5px}
+.sc-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:6px}
+.delta-dn{background:rgba(16,185,129,.12);color:var(--green)} .delta-up{background:rgba(239,68,68,.12);color:var(--red)}
+
+/* ─── TABS ───────────────────────────────────────────── */
+.tab-bar{display:flex;gap:2px;background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:1.5rem;animation:fadeUp .5s .2s ease both;width:fit-content}
+.tab{font-family:var(--body);font-size:13px;font-weight:500;padding:7px 18px;border-radius:7px;border:none;background:none;color:var(--t2);cursor:pointer;transition:all var(--tr)}
+.tab:hover{color:var(--t0);background:var(--bg3)}
+.tab.active{background:var(--blue);color:#fff;box-shadow:0 2px 12px rgba(59,130,246,.4)}
+
+/* ─── SECTION PAGES ──────────────────────────────────── */
+.page{display:none;animation:fadeUp .3s ease both} .page.on{display:block}
+
+/* ─── CHART GRID ─────────────────────────────────────── */
+.chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;transition:border-color var(--tr)}
+.card:hover{border-color:var(--border2)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.card-title{font-family:var(--head);font-size:16px;font-weight:600;letter-spacing:.03em}
+.card-sub{font-size:12px;color:var(--t2);margin-top:1px}
+.chart-wrap{position:relative;width:100%}
+
+/* ─── LEGEND ─────────────────────────────────────────── */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:.75rem}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--t2)}
+.leg-sq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ─── HEATMAP ────────────────────────────────────────── */
+.hmap{display:grid;grid-template-columns:56px repeat(7,1fr);gap:3px;font-size:11px}
+.hmap-col{text-align:center;color:var(--t2);padding:4px 2px;font-size:10.5px;font-weight:600;letter-spacing:.04em}
+.hmap-row-label{display:flex;align-items:center;font-size:10.5px;color:var(--t2);font-family:var(--mono)}
+.hmap-cell{border-radius:5px;padding:7px 2px;text-align:center;font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;transition:transform var(--tr),filter var(--tr);position:relative}
+.hmap-cell:hover{transform:scale(1.12);filter:brightness(1.15);z-index:2}
+.hmap-tip{position:fixed;background:var(--bg0);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:999;display:none;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+
+/* ─── AIRLINE CARDS ──────────────────────────────────── */
+.airline-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.al-card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:1rem;transition:all var(--tr);cursor:pointer;position:relative;overflow:hidden}
+.al-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--blue);transform:scaleY(0);transition:transform var(--tr)}
+.al-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.al-card:hover::before{transform:scaleY(1)}
+.al-card.best{border-color:rgba(16,185,129,.35)}
+.al-card.best::before{background:var(--green);transform:scaleY(1)}
+.al-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:.7rem;border:1px solid var(--border)}
+.al-name{font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:.03em;margin-bottom:2px}
+.al-price{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--blue2);margin:.4rem 0}
+.al-meta{font-size:11.5px;color:var(--t2);display:flex;gap:10px}
+.best-tag{display:inline-flex;align-items:center;gap:4px;background:rgba(16,185,129,.12);color:var(--green);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:20px;margin-top:.4rem}
+
+/* ─── FILTERS ────────────────────────────────────────── */
+.filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:1rem;padding:.9rem 1rem;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r)}
+.filter-bar label{font-size:12px;color:var(--t2);font-weight:500;white-space:nowrap}
+.sel{background:var(--bg2);border:1px solid var(--border2);border-radius:7px;color:var(--t0);font-family:var(--body);font-size:12.5px;padding:5px 10px;cursor:pointer;transition:border-color var(--tr)}
+.sel:focus{outline:none;border-color:var(--blue)}
+.search-box{background:var(--bg2);border:1px solid var(--border2);border-radius:7px;color:var(--t0);font-family:var(--mono);font-size:12px;padding:5px 10px;width:180px;transition:all var(--tr)}
+.search-box::placeholder{color:var(--t3)}
+.search-box:focus{outline:none;border-color:var(--blue);width:220px;background:var(--bg3)}
+.btn{background:var(--blue);border:none;border-radius:7px;color:#fff;font-family:var(--body);font-size:12.5px;font-weight:500;padding:6px 14px;cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;gap:5px}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--t1)} .btn-ghost:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue2)}
+.btn-sm{padding:4px 10px;font-size:11.5px}
+
+/* ─── TABLE ──────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg2)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t2);white-space:nowrap;cursor:pointer;user-select:none;transition:color var(--tr)}
+th:hover{color:var(--t0)}
+th.sorted{color:var(--blue2)}
+th .sort-icon{margin-left:4px;font-size:10px;opacity:.5}
+th.sorted .sort-icon{opacity:1}
+td{padding:10px 14px;border-top:1px solid var(--border);white-space:nowrap;transition:background var(--tr)}
+tr:hover td{background:var(--bg2)}
+td.mono{font-family:var(--mono);font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px}
+.b-green{background:rgba(16,185,129,.12);color:var(--green)} .b-red{background:rgba(239,68,68,.12);color:var(--red)} .b-amber{background:rgba(245,158,11,.12);color:var(--amber2)} .b-blue{background:rgba(59,130,246,.12);color:var(--blue2)} .b-purple{background:rgba(139,92,246,.12);color:var(--purple)}
+.pagination{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12.5px;color:var(--t2)}
+.pg-btns{display:flex;gap:4px}
+.pg-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--t1);cursor:pointer;transition:all var(--tr);font-family:var(--mono);font-size:12px}
+.pg-btn:hover{background:var(--bg3);border-color:var(--blue)} .pg-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* ─── PROGRESS BAR ───────────────────────────────────── */
+.pbar-wrap{margin:.4rem 0}
+.pbar-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--t2);margin-bottom:4px}
+.pbar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden}
+.pbar-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1);background:var(--blue)}
+.pbar-fill.green{background:var(--green)} .pbar-fill.amber{background:var(--amber)}
+
+/* ─── MODAL ──────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+.overlay.show{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg1);border:1px solid var(--border2);border-radius:16px;padding:1.75rem;width:min(420px,92vw);box-shadow:0 24px 80px rgba(0,0,0,.5);animation:slideUp .25s ease both}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.modal-head h3{font-family:var(--head);font-size:20px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--t1);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all var(--tr)}
+.modal-close:hover{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red)}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase}
+.form-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;color:var(--t0);font-family:var(--mono);font-size:14px;padding:9px 12px;transition:all var(--tr)}
+.form-input:focus{outline:none;border-color:var(--blue);background:var(--bg3);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+
+/* ─── TOAST ──────────────────────────────────────────── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--bg1);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:13px;min-width:260px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4);display:flex;align-items:flex-start;gap:10px;pointer-events:all;animation:toastIn .3s ease both;border-left:3px solid var(--blue)}
+.toast.success{border-left-color:var(--green)} .toast.error{border-left-color:var(--red)} .toast.warn{border-left-color:var(--amber)}
+@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+@keyframes toastOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(24px)}}
+.toast-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.toast-body{flex:1}
+.toast-title{font-weight:600;margin-bottom:2px;color:var(--t0)}
+.toast-msg{font-size:12px;color:var(--t2)}
+.toast-close{background:none;border:none;color:var(--t2);cursor:pointer;font-size:14px;padding:0;transition:color var(--tr);flex-shrink:0}
+.toast-close:hover{color:var(--t0)}
+
+/* ─── INSIGHT ROW ────────────────────────────────────── */
+.insight-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:700px){.insight-row{grid-template-columns:1fr}}
+.insight{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;display:flex;align-items:center;gap:12px;transition:all var(--tr)}
+.insight:hover{border-color:var(--border2);transform:translateX(3px)}
+.insight-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.insight-text .q{font-size:11.5px;color:var(--t2);margin-bottom:2px}
+.insight-text .a{font-family:var(--head);font-size:17px;font-weight:700;letter-spacing:.02em}
+.insight-text .proof{font-family:var(--mono);font-size:10.5px;color:var(--t3);margin-top:2px}
+
+/* ─── DONUT WRAPPER ──────────────────────────────────── */
+.donut-wrap{position:relative;width:100%;display:flex;justify-content:center;align-items:center;flex-direction:column}
+.donut-center{position:absolute;text-align:center;pointer-events:none}
+.donut-center .big{font-family:var(--head);font-size:22px;font-weight:700}
+.donut-center .sm{font-size:11px;color:var(--t2)}
+
+/* ─── SPARKLINE ──────────────────────────────────────── */
+.spark{display:inline-block;vertical-align:middle}
+
+/* ─── PRICE HISTORY MINI ─────────────────────────────── */
+.mini-history{display:flex;align-items:flex-end;gap:2px;height:32px}
+.mini-bar{border-radius:2px 2px 0 0;width:5px;background:var(--blue);opacity:.6;transition:opacity var(--tr)}
+.mini-bar:hover{opacity:1}
+
+/* ─── SKELETON ───────────────────────────────────────── */
+.skeleton{background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ─── CONFETTI ───────────────────────────────────────── */
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999;animation:confetti-fall linear both}
+@keyframes confetti-fall{0%{opacity:1;transform:translateY(-20px) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+
+/* ─── SCROLLBAR ──────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-track{background:var(--bg0)} ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px} ::-webkit-scrollbar-thumb:hover{background:var(--t3)}
+
+/* ─── KEYBOARD SHORTCUT OVERLAY ──────────────────────── */
+.shortcuts-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:600;display:none;align-items:center;justify-content:center}
+.shortcuts-overlay.show{display:flex}
+.shortcuts-box{background:var(--bg1);border:1px solid var(--border2);border-radius:16px;padding:1.75rem;width:min(500px,92vw);max-height:80vh;overflow-y:auto}
+.shortcuts-box h3{font-family:var(--head);font-size:20px;font-weight:700;margin-bottom:1.25rem}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--t1)}
+.sc-row:last-child{border:none}
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:600px){
+  .hero{flex-direction:column}
+  .stats{grid-template-columns:1fr 1fr}
+  .tab{padding:6px 12px;font-size:12px}
+  nav{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-pill">LIVE PRICES</div>
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="tickerInner"></div>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-sq">✈</div>
+    <span class="logo-txt">FlightLens</span>
+  </a>
+  <div class="nav-r">
+    <button class="nb" onclick="openModal()">🔔 Set Alert</button>
+    <button class="nb" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="nb danger" id="resetBtn" onclick="showToast('Data refreshed','Fetching latest prices…','info')">↺ Refresh</button>
+    <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
+    <button class="icon-btn" onclick="toggleShortcuts()" title="Keyboard shortcuts">⌨</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-l">
+      <div class="live-badge">LIVE · Updated just now</div>
+      <h1>Flight Price<br>Intelligence</h1>
+      <p>Real-time price tracking across 4 major Indian routes</p>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <div style="font-size:12px;color:var(--t2);font-family:var(--mono);">SNAPSHOTS COLLECTED</div>
+      <div style="font-family:var(--head);font-size:42px;font-weight:700;line-height:1;color:var(--blue2)" id="totalCount">0</div>
+      <div style="font-size:11.5px;color:var(--t2)">across 3 weeks of tracking</div>
+    </div>
+  </div>
+
+  <!-- ROUTE PILLS -->
+  <div class="route-row" id="routeRow"></div>
+
+  <!-- STAT CARDS -->
+  <div class="stats" id="statsRow"></div>
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('dashboard',this)">Dashboard</button>
+    <button class="tab" onclick="showTab('heatmap',this)">Heatmap</button>
+    <button class="tab" onclick="showTab('airlines',this)">Airlines</button>
+    <button class="tab" onclick="showTab('data',this)">Data Table</button>
+    <button class="tab" onclick="showTab('insights',this)">Insights</button>
+  </div>
+
+  <!-- PAGE: DASHBOARD -->
+  <div class="page on" id="page-dashboard">
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Price Trend — 60 Days</div>
+            <div class="card-sub" id="trendSub">BLR → DEL · Economy</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="toggleMA()" id="maBtn">7d MA</button>
+            <button class="btn btn-ghost btn-sm" onclick="zoomChart()">Zoom</button>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-sq" style="background:var(--blue)"></div>Daily price</div>
+          <div class="leg-item" id="maLegend" style="display:none"><div class="leg-sq" style="background:var(--amber)"></div>7-day avg</div>
+        </div>
+        <div class="chart-wrap" style="height:240px"><canvas id="trendChart" role="img" aria-label="60 day price trend chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Book in Advance</div>
+            <div class="card-sub">Avg price by days before</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:240px"><canvas id="advChart" role="img" aria-label="Advance booking price chart"></canvas></div>
+        <div style="margin-top:.75rem;font-size:12px;color:var(--t2)">
+          <span style="color:var(--green);font-weight:600">▼ Sweet spot</span> · 21–28 days ahead
+        </div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Airline Market Share</div>
+            <div class="card-sub">By number of flights</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1.5rem;align-items:center">
+          <div class="donut-wrap" style="max-width:200px;flex-shrink:0">
+            <div class="chart-wrap" style="height:180px"><canvas id="donutChart" role="img" aria-label="Airline market share donut chart"></canvas></div>
+            <div class="donut-center">
+              <div class="big" id="donutCenter">4</div>
+              <div class="sm">airlines</div>
+            </div>
+          </div>
+          <div style="flex:1" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Day of Week Prices</div>
+            <div class="card-sub">All routes average</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:180px"><canvas id="dowChart" role="img" aria-label="Average price by day of week"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: HEATMAP -->
+  <div class="page" id="page-heatmap">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Price Heatmap · Book Day × Fly Day</div>
+          <div class="card-sub">Average price (INR) — hover for details</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--t2)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#10b981;display:inline-block"></span>Cheap</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#f59e0b;display:inline-block"></span>Mid</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#ef4444;display:inline-block"></span>Expensive</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><div id="heatmapGrid" style="min-width:400px"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem">Key takeaways from this data</div>
+      <div id="heatmapInsights"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: AIRLINES -->
+  <div class="page" id="page-airlines">
+    <div class="filter-bar">
+      <label>Sort by:</label>
+      <select class="sel" id="airlineSort" onchange="renderAirlines()">
+        <option value="price">Price (low→high)</option>
+        <option value="price-d">Price (high→low)</option>
+        <option value="name">Name</option>
+        <option value="flights">Flights</option>
+      </select>
+      <label>Stops:</label>
+      <select class="sel" id="stopFilter" onchange="renderAirlines()">
+        <option value="all">All</option>
+        <option value="0">Direct only</option>
+        <option value="1">1 stop</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="renderAirlines()">↺ Reset</button>
+    </div>
+    <div class="airline-grid" id="airlineGrid"></div>
+    <div class="card" style="margin-top:14px">
+      <div class="card-title" style="margin-bottom:1rem">Price comparison — Direct vs 1-stop</div>
+      <div id="stopBars"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: DATA TABLE -->
+  <div class="page" id="page-data">
+    <div class="filter-bar">
+      <label>Search:</label>
+      <input type="text" class="search-box" id="tableSearch" placeholder="airline, route…" oninput="filterTable()"/>
+      <label>Airline:</label>
+      <select class="sel" id="airlineFilter" onchange="filterTable()">
+        <option value="">All airlines</option>
+      </select>
+      <label>Class:</label>
+      <select class="sel" id="classFilter" onchange="filterTable()">
+        <option value="">All</option>
+        <option value="economy">Economy</option>
+        <option value="business">Business</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+      <button class="btn btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr id="tableHead"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <div id="pgInfo" style="color:var(--t2)"></div>
+      <div class="pg-btns" id="pgBtns"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: INSIGHTS -->
+  <div class="page" id="page-insights">
+    <div class="insight-row" id="insightGrid"></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:1rem">Savings potential by route</div>
+      <div id="savingsBars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:1rem">Price spike history</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="spikeChart" role="img" aria-label="Price spike events over time"></canvas></div>
+    </div>
+  </div>
+
+</div><!-- end wrap -->
+
+<!-- HEATMAP TOOLTIP -->
+<div class="hmap-tip" id="hmapTip"></div>
+
+<!-- ALERT MODAL -->
+<div class="overlay" id="alertOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3>🔔 Set Price Alert</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Route</label>
+      <select class="form-input" id="alertRoute">
+        <option value="BLR-DEL">BLR → DEL</option>
+        <option value="BLR-BOM">BLR → BOM</option>
+        <option value="DEL-CCU">DEL → CCU</option>
+        <option value="BOM-HYD">BOM → HYD</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Alert me when price drops below (₹)</label>
+      <input type="number" class="form-input" id="alertThreshold" placeholder="e.g. 3500" min="1000" max="20000"/>
+    </div>
+    <div class="form-group">
+      <label>Email (optional)</label>
+      <input type="email" class="form-input" id="alertEmail" placeholder="you@example.com"/>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:.5rem">
+      <button class="btn" style="flex:1" onclick="saveAlert()">Save Alert</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHORTCUTS OVERLAY -->
+<div class="shortcuts-overlay" id="shortcutsOverlay" onclick="toggleShortcuts()">
+  <div class="shortcuts-box" onclick="event.stopPropagation()">
+    <h3>⌨ Keyboard Shortcuts</h3>
+    <div class="sc-row"><span>Switch to Dashboard</span><div style="display:flex;gap:4px"><span class="kbd">1</span></div></div>
+    <div class="sc-row"><span>Switch to Heatmap</span><div><span class="kbd">2</span></div></div>
+    <div class="sc-row"><span>Switch to Airlines</span><div><span class="kbd">3</span></div></div>
+    <div class="sc-row"><span>Switch to Data Table</span><div><span class="kbd">4</span></div></div>
+    <div class="sc-row"><span>Switch to Insights</span><div><span class="kbd">5</span></div></div>
+    <div class="sc-row"><span>Next route</span><div><span class="kbd">→</span></div></div>
+    <div class="sc-row"><span>Previous route</span><div><span class="kbd">←</span></div></div>
+    <div class="sc-row"><span>Open alert modal</span><div><span class="kbd">A</span></div></div>
+    <div class="sc-row"><span>Export CSV</span><div><span class="kbd">E</span></div></div>
+    <div class="sc-row"><span>Toggle theme</span><div><span class="kbd">T</span></div></div>
+    <div class="sc-row"><span>Close / dismiss</span><div><span class="kbd">Esc</span></div></div>
+    <div class="sc-row"><span>This panel</span><div><span class="kbd">?</span></div></div>
+    <button class="btn" style="margin-top:1rem;width:100%" onclick="toggleShortcuts()">Close</button>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════════ */
+const ROUTES = [
+  { id:'BLR-DEL', label:'BLR → DEL', base:4800, vol:1100, cheapDay:'Tuesday',  bestAdv:'3–4 wks', save:34, dist:1740 },
+  { id:'BLR-BOM', label:'BLR → BOM', base:3200, vol:750,  cheapDay:'Wednesday',bestAdv:'2–3 wks', save:28, dist:840  },
+  { id:'DEL-CCU', label:'DEL → CCU', base:5100, vol:1300, cheapDay:'Saturday', bestAdv:'4–5 wks', save:41, dist:1305 },
+  { id:'BOM-HYD', label:'BOM → HYD', base:2800, vol:550,  cheapDay:'Monday',   bestAdv:'1–2 wks', save:22, dist:620  },
+];
+const AIRLINES = [
+  { name:'IndiGo',      emoji:'💙', code:'6E', multiplier:0.92, flights:142, direct:true  },
+  { name:'Air India',   emoji:'🔴', code:'AI', multiplier:1.08, flights:89,  direct:true  },
+  { name:'SpiceJet',    emoji:'🌶️', code:'SG', multiplier:0.88, flights:97,  direct:false },
+  { name:'Vistara',     emoji:'🟣', code:'UK', multiplier:1.18, flights:61,  direct:true  },
+];
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const ADV_BUCKETS = [1,7,14,21,28,35,42,56,70,84];
+
+let currentRoute = 0;
+let trendChart, advChart, dowChart, donutChart, spikeChart;
+let showMA = false;
+let allRows = [];
+let filteredRows = [];
+let sortKey = 'date';
+let sortAsc = false;
+let currentPage = 1;
+const PAGE_SIZE = 12;
+
+/* ══════════════════════════════════════════════════════
+   SEEDED RANDOM
+══════════════════════════════════════════════════════ */
+function rng(seed) {
+  let s = (seed * 1664525 + 1013904223) & 0xffffffff;
+  return () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; };
+}
+
+/* ══════════════════════════════════════════════════════
+   GENERATE DATA
+══════════════════════════════════════════════════════ */
+function genTrend(ri) {
+  const r = ROUTES[ri], rand = rng(ri*37+11);
+  let p = r.base + (rand()-.5)*r.vol;
+  return Array.from({length:60},(_,i)=>{
+    p += (rand()-.5)*280;
+    if(i>38&&i<46) p*=1.07;
+    if(i>50) p*=0.97;
+    p = Math.max(r.base*.62,Math.min(r.base*1.65,p));
+    return Math.round(p);
+  });
+}
+function genAdv(ri) {
+  const r = ROUTES[ri], rand = rng(ri*13+5);
+  const factors = {1:1.38,7:1.22,14:1.06,21:0.89,28:0.82,35:0.85,42:0.88,56:0.93,70:0.97,84:1.01};
+  return ADV_BUCKETS.map(d=>Math.round(r.base*(factors[d]||1)+(rand()-.5)*180));
+}
+function genHeatmap() {
+  const rand = rng(99);
+  const base = 4200;
+  return Array.from({length:7},(_,ri)=>
+    Array.from({length:7},(_,ci)=>{
+      const wkdayBonus = ci===4?1.28:ci===5?1.2:ci===3?1.05:0.95;
+      const bookBonus  = ri===4?1.18:ri===5?1.12:ri===0?0.96:1.0;
+      return Math.round(base*wkdayBonus*bookBonus+(rand()-.5)*300);
+    })
+  );
+}
+function genRows() {
+  const rows = [];
+  const rand = rng(42);
+  const statuses = ['economy','economy','economy','business'];
+  for(let i=0;i<240;i++){
+    const ri = Math.floor(rand()*4);
+    const ai = Math.floor(rand()*4);
+    const r  = ROUTES[ri], a = AIRLINES[ai];
+    const daysAgo = Math.floor(rand()*21);
+    const daysAhead = Math.floor(rand()*60)+1;
+    const date = new Date(); date.setDate(date.getDate()-daysAgo);
+    const dep  = new Date(); dep.setDate(dep.getDate()+daysAhead);
+    const cls  = statuses[Math.floor(rand()*4)];
+    const price= Math.round(r.base*a.multiplier*(cls==='business'?1.65:1)+(rand()-.5)*r.vol*.6);
+    rows.push({
+      id:i+1, route:r.label, airline:a.name, flightNo:`${a.code}-${Math.floor(rand()*900+100)}`,
+      depDate:dep.toISOString().slice(0,10), scraped:date.toISOString().slice(0,10),
+      price, cls, stops:a.direct?0:1, daysAhead,
+    });
+  }
+  return rows;
+}
+
+/* ══════════════════════════════════════════════════════
+   TICKER
+══════════════════════════════════════════════════════ */
+function buildTicker() {
+  const items = ROUTES.map(r=>{
+    const trend = genTrend(ROUTES.indexOf(r));
+    const p = trend[trend.length-1], prev = trend[trend.length-2];
+    const diff = p-prev, cls = diff>0?'up':'dn', arrow = diff>0?'▲':'▼';
+    return `<div class="t-item"><span class="ri">${r.label}</span><span class="pr">₹${p.toLocaleString()}</span><span class="${cls}">${arrow} ₹${Math.abs(diff)}</span></div>`;
+  }).join('');
+  const el = document.getElementById('tickerInner');
+  el.innerHTML = items.repeat(4);
+}
+
+/* ══════════════════════════════════════════════════════
+   ROUTE PILLS
+══════════════════════════════════════════════════════ */
+function buildRoutePills() {
+  const c = document.getElementById('routeRow');
+  c.innerHTML = ROUTES.map((r,i)=>{
+    const p = genTrend(i).slice(-1)[0];
+    return `<button class="rp${i===currentRoute?' active':''}" onclick="selectRoute(${i})" id="rp-${i}">
+      ${r.label} <span class="rp-price">₹${p.toLocaleString()}</span>
+    </button>`;
+  }).join('');
+}
+
+function selectRoute(i) {
+  currentRoute = i;
+  document.querySelectorAll('.rp').forEach((el,j)=>el.classList.toggle('active',j===i));
+  updateStats();
+  renderTrend();
+  renderAdv();
+  document.getElementById('trendSub').textContent=`${ROUTES[i].label} · Economy`;
+  showToast('Route changed',`Now viewing ${ROUTES[i].label}`,'info');
+}
+
+/* ══════════════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════════════ */
+function updateStats() {
+  const r  = ROUTES[currentRoute];
+  const pr = genTrend(currentRoute);
+  const mn = Math.min(...pr), mx = Math.max(...pr), cur = pr[pr.length-1];
+  const avg= Math.round(pr.reduce((a,b)=>a+b)/pr.length);
+  const cards = [
+    {label:'Current price', icon:'💰', ic:'ic-blue', val:`₹${cur.toLocaleString()}`, sub:'Economy · 1 adult', delta:pr[pr.length-1]-pr[pr.length-2], deltaTxt:'vs yesterday'},
+    {label:'60-day lowest',  icon:'📉', ic:'ic-green',val:`₹${mn.toLocaleString()}`, sub:'Best seen', delta:-(((cur-mn)/mn)*100), deltaTxt:'below current', pct:true},
+    {label:'Best book window',icon:'📅',ic:'ic-amber', val:r.bestAdv,               sub:'before departure'},
+    {label:'Max savings',    icon:'🎯', ic:'ic-green',val:`${r.save}%`,               sub:'vs last-minute', delta:-r.save, deltaTxt:'cheaper',pct:true},
+  ];
+  document.getElementById('statsRow').innerHTML = cards.map(c=>{
+    const hasDelta = c.delta!==undefined;
+    const isNeg = c.delta<0;
+    const dt = hasDelta?`<div class="sc-delta ${isNeg?'delta-dn':'delta-up'}">${isNeg?'▼':'▲'} ${Math.abs(c.delta)>1?Math.round(Math.abs(c.delta)):'<1'}${c.pct?'%':' ₹'} ${c.deltaTxt}</div>`:'';
+    return `<div class="sc" onclick="showToast('${c.label}','${c.sub}','info')">
+      <div class="sc-label">${c.label}<div class="sc-label icon ${c.ic}">${c.icon}</div></div>
+      <div class="sc-val" data-target="${c.val}">${c.val}</div>
+      <div class="sc-sub">${c.sub}</div>${dt}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   COUNT-UP ANIMATION
+══════════════════════════════════════════════════════ */
+function animateCount(el, target) {
+  const num = parseInt(target.replace(/[^0-9]/g,''));
+  if(isNaN(num)) return;
+  const prefix = target.match(/^[^\d]*/)[0];
+  const suffix = target.match(/[^\d]*$/)[0];
+  let start = 0, dur = 900, startTime = null;
+  function step(ts) {
+    if(!startTime) startTime = ts;
+    const prog = Math.min((ts-startTime)/dur,1);
+    const ease = 1-Math.pow(1-prog,3);
+    el.textContent = prefix + Math.round(start+num*ease).toLocaleString() + suffix;
+    if(prog<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function runCountUps() {
+  document.querySelectorAll('.sc-val[data-target]').forEach(el=>{
+    const t = el.getAttribute('data-target');
+    if(/[\d]/.test(t)) animateCount(el, t);
+  });
+  animateCount(document.getElementById('totalCount'), '2418');
+}
+
+/* ══════════════════════════════════════════════════════
+   CHARTS — TREND
+══════════════════════════════════════════════════════ */
+function renderTrend() {
+  const prices = genTrend(currentRoute);
+  const labels = prices.map((_,i)=>i%10===0?`Day ${i+1}`:'');
+  const ma7 = prices.map((_,i)=>{
+    const sl = prices.slice(Math.max(0,i-6),i+1);
+    return Math.round(sl.reduce((a,b)=>a+b)/sl.length);
+  });
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if(trendChart) trendChart.destroy();
+  const datasets = [{
+    label:'Price (₹)', data:prices,
+    borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.08)',
+    borderWidth:1.8, pointRadius:0, fill:true, tension:0.35,
+  }];
+  if(showMA) datasets.push({
+    label:'7-day MA', data:ma7,
+    borderColor:'#f59e0b', backgroundColor:'transparent',
+    borderWidth:2, pointRadius:0, borderDash:[5,3], tension:0.35,
+  });
+  trendChart = new Chart(ctx,{
+    type:'line', data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:600,easing:'easeInOutQuart'},
+      plugins:{legend:{display:false},tooltip:{
+        mode:'index',intersect:false,
+        backgroundColor:'rgba(13,17,33,.95)',
+        borderColor:'rgba(59,130,246,.3)',borderWidth:1,
+        titleFont:{family:'JetBrains Mono',size:11},
+        bodyFont:{family:'JetBrains Mono',size:12},
+        callbacks:{label:ctx=>`₹${ctx.raw.toLocaleString()}`}
+      }},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#475569'},grid:{display:false},border:{display:false}},
+        y:{ticks:{font:{size:10},color:'#475569',callback:v=>'₹'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
+      },
+      interaction:{mode:'index',intersect:false},
+    }
+  });
+}
+
+/* ─── ADVANCE BOOKING ─────────────────────────────── */
+function renderAdv() {
+  const data = genAdv(currentRoute);
+  const base = ROUTES[currentRoute].base;
+  const colors = data.map(v=>v>base*1.08?'rgba(239,68,68,.75)':v<base*.9?'rgba(16,185,129,.75)':'rgba(59,130,246,.75)');
+  const ctx = document.getElementById('advChart').getContext('2d');
+  if(advChart) advChart.destroy();
+  advChart = new Chart(ctx,{
+    type:'bar',
+    data:{labels:ADV_BUCKETS.map(d=>d+'d'),datasets:[{data,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:700,easing:'easeOutBounce'},
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'rgba(13,17,33,.95)',borderColor:'rgba(59,130,246,.3)',borderWidth:1,
+        callbacks:{label:ctx=>`₹${ctx.raw.toLocaleString()}`}
+      }},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#475569'},grid:{display:false},border:{display:false}},
+        y:{ticks:{font:{size:10},color:'#475569',callback:v=>'₹'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
+      }
+    }
+  });
+}
+
+/* ─── DAY OF WEEK ─────────────────────────────────── */
+function renderDow() {
+  const vals=[4200,3780,3650,4100,5300,4950,4420];
+  const mn=Math.min(...vals), mx=Math.max(...vals);
+  const colors=vals.map(v=>v===mn?'rgba(16,185,129,.8)':v===mx?'rgba(239,68,68,.8)':'rgba(59,130,246,.65)');
+  const ctx=document.getElementById('dowChart').getContext('2d');
+  if(dowChart) dowChart.destroy();
+  dowChart=new Chart(ctx,{
+    type:'bar',data:{labels:DAYS,datasets:[{data:vals,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:600},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`₹${c.raw.toLocaleString()}`}}},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#475569'},grid:{display:false},border:{display:false}},
+        y:{ticks:{font:{size:10},color:'#475569',callback:v=>'₹'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
+      }
+    }
+  });
+}
+
+/* ─── DONUT ───────────────────────────────────────── */
+function renderDonut() {
+  const ctx=document.getElementById('donutChart').getContext('2d');
+  if(donutChart) donutChart.destroy();
+  const vals=AIRLINES.map(a=>a.flights);
+  const colors=['#3b82f6','#ef4444','#f59e0b','#8b5cf6'];
+  donutChart=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:AIRLINES.map(a=>a.name),datasets:[{data:vals,backgroundColor:colors,borderWidth:0,hoverOffset:8}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'72%',
+      animation:{animateRotate:true,duration:800},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} flights`}}}
+    }
+  });
+  const tot=vals.reduce((a,b)=>a+b,0);
+  document.getElementById('donutLegend').innerHTML=AIRLINES.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem">
+      <div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${a.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${a.flights} flights · ${Math.round(a.flights/tot*100)}%</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ─── SPIKE CHART ─────────────────────────────────── */
+function renderSpikeChart() {
+  const ctx=document.getElementById('spikeChart').getContext('2d');
+  if(spikeChart) spikeChart.destroy();
+  const rand=rng(77);
+  const labels=Array.from({length:21},(_,i)=>{const d=new Date();d.setDate(d.getDate()-20+i);return d.toISOString().slice(5,10)});
+  const spikes=labels.map(()=>rand()>.8?Math.round((rand()*.4+.2)*100):0);
+  spikeChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{
+      data:spikes,label:'% spike events',
+      backgroundColor:spikes.map(v=>v>30?'rgba(239,68,68,.7)':v>15?'rgba(245,158,11,.7)':'rgba(59,130,246,.5)'),
+      borderRadius:4,borderSkipped:false
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw?`${c.raw}% spike`:'No spike'}}},
+      scales:{
+        x:{ticks:{font:{size:9},color:'#475569',maxRotation:45,autoSkip:false},grid:{display:false},border:{display:false}},
+        y:{ticks:{font:{size:10},color:'#475569',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   HEATMAP
+══════════════════════════════════════════════════════ */
+function renderHeatmap() {
+  const data=genHeatmap();
+  const flat=data.flat(), mn=Math.min(...flat), mx=Math.max(...flat);
+  function color(v) {
+    const t=(v-mn)/(mx-mn);
+    if(t<.33) return {bg:'rgba(16,185,129,.18)',border:'rgba(16,185,129,.35)',text:'#10b981'};
+    if(t<.66) return {bg:'rgba(245,158,11,.18)',border:'rgba(245,158,11,.35)',text:'#fbbf24'};
+    return {bg:'rgba(239,68,68,.18)',border:'rgba(239,68,68,.35)',text:'#f87171'};
+  }
+  let html=`<div class="hmap">
+    <div></div>${DAYS.map(d=>`<div class="hmap-col">${d}</div>`).join('')}`;
+  data.forEach((row,ri)=>{
+    html+=`<div class="hmap-row-label">${DAYS[ri]}</div>`;
+    row.forEach((v,ci)=>{
+      const c=color(v);
+      html+=`<div class="hmap-cell" style="background:${c.bg};color:${c.text};border:1px solid ${c.border}"
+        onmouseenter="showHmapTip(event,${ri},${ci},${v})" onmouseleave="hideHmapTip()">
+        ₹${Math.round(v/100)/10}k</div>`;
+    });
+  });
+  html+='</div>';
+  document.getElementById('heatmapGrid').innerHTML=html;
+
+  const insights=[
+    {q:'Cheapest combo?',a:'Book Mon, fly Tue',color:'var(--green)',icon:'💡'},
+    {q:'Most expensive?',a:'Book Fri, fly Fri',color:'var(--red)',icon:'🔥'},
+    {q:'Avg cheapest fly-day',a:'Tuesday (₹3.8k avg)',color:'var(--blue2)',icon:'📅'},
+    {q:'Weekend premium',a:'+28% vs weekday',color:'var(--amber)',icon:'📊'},
+  ];
+  document.getElementById('heatmapInsights').innerHTML=`<div class="insight-row">${insights.map(ins=>`
+    <div class="insight">
+      <div class="insight-icon" style="background:rgba(255,255,255,.06)">${ins.icon}</div>
+      <div class="insight-text">
+        <div class="q">${ins.q}</div>
+        <div class="a" style="color:${ins.color}">${ins.a}</div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+function showHmapTip(e,ri,ci,val) {
+  const tip=document.getElementById('hmapTip');
+  tip.style.display='block';
+  tip.innerHTML=`<div style="font-weight:600;margin-bottom:4px;font-family:var(--head);font-size:14px">₹${val.toLocaleString()}</div>
+    <div style="font-size:11.5px;color:var(--t2)">Book on <b>${DAYS[ri]}</b>, fly on <b>${DAYS[ci]}</b></div>`;
+  tip.style.left=(e.clientX+12)+'px';
+  tip.style.top=(e.clientY-10)+'px';
+}
+function hideHmapTip(){document.getElementById('hmapTip').style.display='none'}
+
+/* ══════════════════════════════════════════════════════
+   AIRLINES
+══════════════════════════════════════════════════════ */
+function renderAirlines() {
+  const sort = document.getElementById('airlineSort').value;
+  const stopF = document.getElementById('stopFilter').value;
+  let data = AIRLINES.filter(a=>stopF==='all'||String(a.direct?0:1)===stopF);
+  const r = ROUTES[currentRoute];
+  data = data.map(a=>({...a, avgPrice:Math.round(r.base*a.multiplier)}));
+  if(sort==='price') data.sort((a,b)=>a.avgPrice-b.avgPrice);
+  else if(sort==='price-d') data.sort((a,b)=>b.avgPrice-a.avgPrice);
+  else if(sort==='name') data.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sort==='flights') data.sort((a,b)=>b.flights-a.flights);
+  const best = [...data].sort((a,b)=>a.avgPrice-b.avgPrice)[0];
+  document.getElementById('airlineGrid').innerHTML = data.map(a=>`
+    <div class="al-card${a.name===best.name?' best':''}" onclick="showToast('${a.name}','Avg price on this route: ₹${a.avgPrice.toLocaleString()}','info')">
+      <div class="al-logo">${a.emoji}</div>
+      <div class="al-name">${a.name}</div>
+      <div style="font-size:11px;color:var(--t2);font-family:var(--mono);letter-spacing:.04em">${a.code} · ${a.direct?'Direct':'1 stop'}</div>
+      <div class="al-price">₹${a.avgPrice.toLocaleString()}</div>
+      <div class="al-meta"><span>${a.flights} flights/mo</span></div>
+      ${a.name===best.name?'<div class="best-tag">✓ Best price</div>':''}
+    </div>`).join('');
+
+  // stop bars
+  const direct = Math.round(r.base*1.0);
+  const oneStop = Math.round(r.base*0.84);
+  document.getElementById('stopBars').innerHTML = [
+    {label:'Direct flight',val:direct,color:'var(--blue)'},
+    {label:'1 stop',val:oneStop,color:'var(--green)'},
+  ].map(b=>`
+    <div class="pbar-wrap">
+      <div class="pbar-label"><span>${b.label}</span><span style="font-family:var(--mono);font-weight:500">₹${b.val.toLocaleString()}</span></div>
+      <div class="pbar"><div class="pbar-fill" style="background:${b.color};width:0%" data-w="${Math.round(b.val/direct*100)}%"></div></div>
+    </div>`).join('');
+  setTimeout(()=>{document.querySelectorAll('.pbar-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w;el.removeAttribute('data-w')})},100);
+}
+
+/* ══════════════════════════════════════════════════════
+   DATA TABLE
+══════════════════════════════════════════════════════ */
+const COLS = [
+  {key:'id',label:'#',w:'40px'},
+  {key:'route',label:'Route'},
+  {key:'airline',label:'Airline'},
+  {key:'flightNo',label:'Flight'},
+  {key:'depDate',label:'Dep. Date'},
+  {key:'daysAhead',label:'Days Ahead'},
+  {key:'price',label:'Price (₹)'},
+  {key:'cls',label:'Class'},
+  {key:'stops',label:'Stops'},
+];
+function buildTableHead() {
+  document.getElementById('tableHead').innerHTML = COLS.map(c=>`
+    <th class="${sortKey===c.key?'sorted':''}" onclick="sortBy('${c.key}')" style="${c.w?'width:'+c.w:''}">
+      ${c.label}<span class="sort-icon">${sortKey===c.key?(sortAsc?'↑':'↓'):'↕'}</span>
+    </th>`).join('');
+}
+function sortBy(k) {
+  if(sortKey===k) sortAsc=!sortAsc; else{sortKey=k;sortAsc=true;}
+  currentPage=1; filterTable();
+}
+function filterTable() {
+  const q = document.getElementById('tableSearch').value.toLowerCase();
+  const af = document.getElementById('airlineFilter').value;
+  const cf = document.getElementById('classFilter').value;
+  filteredRows = allRows.filter(r=>{
+    if(q && !Object.values(r).join(' ').toLowerCase().includes(q)) return false;
+    if(af && r.airline!==af) return false;
+    if(cf && r.cls!==cf) return false;
+    return true;
+  });
+  filteredRows.sort((a,b)=>{
+    let va=a[sortKey],vb=b[sortKey];
+    if(typeof va==='string') return sortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    return sortAsc?va-vb:vb-va;
+  });
+  renderTablePage();
+}
+function renderTablePage() {
+  buildTableHead();
+  const start=(currentPage-1)*PAGE_SIZE, slice=filteredRows.slice(start,start+PAGE_SIZE);
+  const trend=genTrend(0);
+  document.getElementById('tableBody').innerHTML = slice.map(r=>{
+    const change = Math.round((Math.random()-.4)*5);
+    const delta = change>0?`<span class="badge b-red">▲${change}%</span>`:change<0?`<span class="badge b-green">▼${Math.abs(change)}%</span>`:`<span class="badge b-blue">—</span>`;
+    return `<tr>
+      <td class="mono" style="color:var(--t3)">${r.id}</td>
+      <td>${r.route}</td>
+      <td><span style="font-weight:500">${r.airline}</span></td>
+      <td class="mono" style="color:var(--t2)">${r.flightNo}</td>
+      <td class="mono">${r.depDate}</td>
+      <td class="mono" style="color:var(--t2)">${r.daysAhead}d</td>
+      <td><span style="font-family:var(--mono);font-weight:600;color:var(--blue2)">₹${r.price.toLocaleString()}</span> ${delta}</td>
+      <td><span class="badge ${r.cls==='business'?'b-purple':'b-blue'}">${r.cls}</span></td>
+      <td><span class="badge ${r.stops===0?'b-green':'b-amber'}">${r.stops===0?'Direct':'1 stop'}</span></td>
+    </tr>`;
+  }).join('');
+  renderPagination();
+}
+function renderPagination() {
+  const total=filteredRows.length, pages=Math.ceil(total/PAGE_SIZE);
+  document.getElementById('pgInfo').textContent=`Showing ${(currentPage-1)*PAGE_SIZE+1}–${Math.min(currentPage*PAGE_SIZE,total)} of ${total} rows`;
+  const start=Math.max(1,currentPage-2), end=Math.min(pages,start+4);
+  document.getElementById('pgBtns').innerHTML=
+    `<button class="pg-btn" onclick="goPage(${Math.max(1,currentPage-1)})" ${currentPage===1?'disabled':''}>‹</button>`+
+    Array.from({length:end-start+1},(_,i)=>start+i).map(p=>`<button class="pg-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`).join('')+
+    `<button class="pg-btn" onclick="goPage(${Math.min(pages,currentPage+1)})" ${currentPage===pages?'disabled':''}>›</button>`;
+}
+function goPage(p){currentPage=p;renderTablePage()}
+function clearFilters(){
+  document.getElementById('tableSearch').value='';
+  document.getElementById('airlineFilter').value='';
+  document.getElementById('classFilter').value='';
+  filteredRows=[...allRows];currentPage=1;filterTable();
+}
+function buildAirlineFilter() {
+  const airlines=[...new Set(allRows.map(r=>r.airline))].sort();
+  document.getElementById('airlineFilter').innerHTML=
+    `<option value="">All airlines</option>`+airlines.map(a=>`<option>${a}</option>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   INSIGHTS PAGE
+══════════════════════════════════════════════════════ */
+function renderInsights() {
+  const items=[
+    {q:'Cheapest day to fly?',a:'Tuesday',proof:'AVG(price) GROUP BY DAYOFWEEK',icon:'📉',color:'var(--green)'},
+    {q:'Best booking window?',a:'21–28 days ahead',proof:'DATEDIFF + week_bucket CTE',icon:'📅',color:'var(--blue2)'},
+    {q:'Morning vs evening?',a:'Morning saves ~12%',proof:'HOUR(departure_time) group',icon:'🌅',color:'var(--amber)'},
+    {q:'Direct vs 1-stop gap?',a:'Direct costs +18%',proof:'WHERE stops=0 vs stops=1',icon:'✈️',color:'var(--purple)'},
+    {q:'Priciest airline?',a:'Vistara (+18%)',proof:'AVG(price) GROUP BY airline',icon:'🏷️',color:'var(--red)'},
+    {q:'Best budget pick?',a:'SpiceJet (−12%)',proof:'MIN(avg_price) per airline',icon:'💰',color:'var(--green)'},
+  ];
+  document.getElementById('insightGrid').innerHTML=items.map(i=>`
+    <div class="insight">
+      <div class="insight-icon ic-blue" style="background:rgba(255,255,255,.06);font-size:20px">${i.icon}</div>
+      <div class="insight-text">
+        <div class="q">${i.q}</div>
+        <div class="a" style="color:${i.color}">${i.a}</div>
+        <div class="proof">${i.proof}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('savingsBars').innerHTML=ROUTES.map(r=>`
+    <div class="pbar-wrap" style="margin-bottom:.9rem">
+      <div class="pbar-label"><span>${r.label}</span><span style="font-family:var(--mono);font-weight:600;color:var(--green)">Save up to ${r.save}%</span></div>
+      <div class="pbar"><div class="pbar-fill green" style="width:0%" data-w="${r.save}%"></div></div>
+      <div style="font-size:11px;color:var(--t2);margin-top:3px">Best window: ${r.bestAdv} · Cheapest day: ${r.cheapDay}</div>
+    </div>`).join('');
+  setTimeout(()=>{document.querySelectorAll('.pbar-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w;el.removeAttribute('data-w')})},200);
+}
+
+/* ══════════════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════════════ */
+const PAGES=['dashboard','heatmap','airlines','data','insights'];
+function showTab(id,btn) {
+  PAGES.forEach(p=>{document.getElementById('page-'+p).classList.remove('on')});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('on');
+  if(btn) btn.classList.add('active');
+  if(id==='heatmap') renderHeatmap();
+  if(id==='airlines') renderAirlines();
+  if(id==='data') {filteredRows=[...allRows];filterTable();}
+  if(id==='insights') {renderInsights();renderSpikeChart();}
+}
+
+/* ══════════════════════════════════════════════════════
+   TOGGLE MA
+══════════════════════════════════════════════════════ */
+function toggleMA() {
+  showMA=!showMA;
+  document.getElementById('maBtn').classList.toggle('active',showMA);
+  document.getElementById('maLegend').style.display=showMA?'flex':'none';
+  renderTrend();
+}
+
+/* ══════════════════════════════════════════════════════
+   ZOOM CHART
+══════════════════════════════════════════════════════ */
+let zoomed=false;
+function zoomChart() {
+  zoomed=!zoomed;
+  const w=document.querySelector('.chart-grid');
+  if(zoomed){
+    w.style.gridTemplateColumns='1fr';
+    document.querySelector('.chart-wrap').parentElement.style.gridColumn='1/-1';
+  } else {
+    w.style.gridTemplateColumns='';
+  }
+  showToast('Chart zoom',zoomed?'Expanded view':'Normal view','info');
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════ */
+function openModal(){document.getElementById('alertOverlay').classList.add('show')}
+function closeModal(e){if(!e||e.target===e.currentTarget) document.getElementById('alertOverlay').classList.remove('show')}
+function saveAlert() {
+  const route=document.getElementById('alertRoute').value;
+  const thresh=document.getElementById('alertThreshold').value;
+  if(!thresh){showToast('Missing threshold','Please enter a price threshold','error');return;}
+  document.getElementById('alertOverlay').classList.remove('show');
+  showToast('Alert saved!',`We'll notify you when ${route} drops below ₹${Number(thresh).toLocaleString()}`,'success');
+  launchConfetti();
+}
+
+/* ══════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════ */
+function showToast(title,msg,type='info',duration=3500) {
+  const icons={info:'ℹ️',success:'✅',error:'❌',warn:'⚠️'};
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<div class="toast-icon">${icons[type]||'ℹ️'}</div>
+    <div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>
+    <button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>{t.style.animation='toastOut .3s ease both';setTimeout(()=>t.remove(),300)},duration);
+}
+
+/* ══════════════════════════════════════════════════════
+   CONFETTI
+══════════════════════════════════════════════════════ */
+function launchConfetti() {
+  const colors=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#60a5fa'];
+  for(let i=0;i<55;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg);animation-duration:${1.2+Math.random()*1.8}s;animation-delay:${Math.random()*.6}s;width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(2.5+Math.random()*2)*1000);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   EXPORT CSV
+══════════════════════════════════════════════════════ */
+function exportCSV() {
+  const headers=COLS.map(c=>c.label).join(',');
+  const rows=filteredRows.length?filteredRows:allRows;
+  const csv=[headers,...rows.map(r=>COLS.map(c=>r[c.key]).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='flight_price_data.csv';a.click();
+  showToast('Export ready',`${rows.length} rows downloaded as CSV`,'success');
+}
+
+/* ══════════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('themeBtn').textContent=dark?'🌙':'☀️';
+  if(trendChart) renderTrend();
+  if(advChart) renderAdv();
+  if(dowChart) renderDow();
+}
+
+/* ══════════════════════════════════════════════════════
+   SHORTCUTS
+══════════════════════════════════════════════════════ */
+function toggleShortcuts() {
+  const el=document.getElementById('shortcutsOverlay');
+  el.classList.toggle('show');
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  const tabs=document.querySelectorAll('.tab');
+  const map={'1':0,'2':1,'3':2,'4':3,'5':4};
+  if(map[e.key]!==undefined){tabs[map[e.key]].click();return;}
+  if(e.key==='ArrowRight'){selectRoute((currentRoute+1)%ROUTES.length);return;}
+  if(e.key==='ArrowLeft'){selectRoute((currentRoute+ROUTES.length-1)%ROUTES.length);return;}
+  if(e.key==='a'||e.key==='A'){openModal();return;}
+  if(e.key==='e'||e.key==='E'){exportCSV();return;}
+  if(e.key==='t'||e.key==='T'){toggleTheme();return;}
+  if(e.key==='Escape'){closeModal();document.getElementById('shortcutsOverlay').classList.remove('show');return;}
+  if(e.key==='?'){toggleShortcuts();return;}
+});
+
+/* ══════════════════════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════════════════════ */
+function initScrollReveal() {
+  const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){en.target.style.opacity='1';en.target.style.transform='none';}
+    });
+  },{threshold:.1});
+  document.querySelectorAll('.card,.sc,.al-card').forEach(el=>{
+    el.style.opacity='0';el.style.transform='translateY(12px)';el.style.transition='opacity .4s ease,transform .4s ease';
+    obs.observe(el);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded',()=>{
+  allRows=genRows();
+  filteredRows=[...allRows];
+  buildTicker();
+  buildRoutePills();
+  updateStats();
+  renderTrend();
+  renderAdv();
+  renderDow();
+  renderDonut();
+  buildAirlineFilter();
+  setTimeout(runCountUps,200);
+  setTimeout(initScrollReveal,100);
+  setTimeout(()=>showToast('Welcome to FlightLens','Track, analyse, and save on flights 🚀','success',4000),600);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flight Price Tracker — Full Project Guide</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f6f3;
+    --bg3: #eeecea;
+    --text: #1a1a1a;
+    --text2: #555;
+    --text3: #888;
+    --border: #e0ddd8;
+    --blue: #1a5fa8;
+    --blue-bg: #e8f0fa;
+    --green: #0f6e56;
+    --green-bg: #e1f5ee;
+    --amber: #854f0b;
+    --amber-bg: #faeeda;
+    --red: #993c1d;
+    --red-bg: #faece7;
+    --purple: #534ab7;
+    --purple-bg: #eeedfe;
+    --radius: 10px;
+    --mono: 'Courier New', monospace;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: var(--bg2);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ---- COVER ---- */
+  .cover {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .cover .tag {
+    display: inline-block;
+    background: var(--blue-bg);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+  .cover h1 { font-size: 30px; font-weight: 700; margin-bottom: 0.5rem; }
+  .cover p  { color: var(--text2); font-size: 15px; max-width: 540px; margin: 0 auto 1.5rem; }
+  .cover .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chip {
+    font-size: 12px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  /* ---- SECTION HEADINGS ---- */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2.5rem 0 1rem;
+  }
+  .section-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--text);
+    color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-label h2 { font-size: 18px; font-weight: 700; }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 0.6rem; }
+  .card p  { color: var(--text2); font-size: 14px; margin-bottom: 0.5rem; }
+  .card p:last-child { margin-bottom: 0; }
+
+  /* ---- STEP CARDS ---- */
+  .steps { display: flex; flex-direction: column; gap: 1px; }
+  .step {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 1.25rem 1.5rem;
+  }
+  .steps .step:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+  .steps .step:last-child  { border-radius: 0 0 var(--radius) var(--radius); }
+  .step-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;
+  }
+  .step-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--blue-bg); color: var(--blue);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step h4 { font-size: 14px; font-weight: 700; }
+  .step p  { font-size: 14px; color: var(--text2); }
+
+  /* ---- CODE BLOCKS ---- */
+  .code-block {
+    background: #1e1e2e;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin: 0.75rem 0;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: #cdd6f4;
+  }
+  .code-block .cm  { color: #6c7086; font-style: italic; }
+  .code-block .kw  { color: #89b4fa; }
+  .code-block .fn  { color: #a6e3a1; }
+  .code-block .st  { color: #f9e2af; }
+  .code-block .op  { color: #f38ba8; }
+  .code-block .py  { color: #cba6f7; }
+
+  .file-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    font-size: 12px; font-weight: 600; color: var(--text2);
+    padding: 5px 14px;
+    margin-bottom: 0;
+    font-family: var(--mono);
+  }
+  .file-label + .code-block { border-radius: 0 var(--radius) var(--radius) var(--radius); }
+
+  /* ---- CALLOUTS ---- */
+  .callout {
+    display: flex; gap: 12px; align-items: flex-start;
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+    font-size: 14px;
+  }
+  .callout.tip    { background: var(--green-bg);  border-left: 3px solid var(--green);  }
+  .callout.warn   { background: var(--amber-bg);  border-left: 3px solid var(--amber);  }
+  .callout.info   { background: var(--blue-bg);   border-left: 3px solid var(--blue);   }
+  .callout.resume { background: var(--purple-bg); border-left: 3px solid var(--purple); }
+  .callout-icon { font-size: 16px; flex-shrink: 0; line-height: 1.7; }
+  .callout-body { color: var(--text); }
+  .callout-body strong { font-weight: 700; }
+
+  /* ---- GRID ---- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 580px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* ---- TABLE ---- */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0.75rem 0; }
+  .tbl th { text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text3); padding: 8px 12px; border-bottom: 2px solid var(--border); }
+  .tbl td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  .tbl td:first-child { font-family: var(--mono); font-size: 12px; color: var(--text); font-weight: 600; }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .badge-green  { background: var(--green-bg);  color: var(--green);  }
+  .badge-amber  { background: var(--amber-bg);  color: var(--amber);  }
+  .badge-blue   { background: var(--blue-bg);   color: var(--blue);   }
+  .badge-red    { background: var(--red-bg);     color: var(--red);    }
+
+  /* ---- FOLDER TREE ---- */
+  .tree {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 2;
+  }
+  .tree .dir  { color: var(--blue); font-weight: 700; }
+  .tree .file { color: var(--text2); }
+  .tree .note { color: var(--text3); font-style: italic; margin-left: 4px; font-family: sans-serif; font-size: 12px; }
+
+  /* ---- DIVIDER ---- */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  /* ---- INTERVIEW BOX ---- */
+  .interview {
+    background: var(--bg);
+    border: 2px solid var(--blue);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-top: 1rem;
+  }
+  .interview h4 { font-size: 14px; font-weight: 700; color: var(--blue); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .qa { margin-bottom: 1rem; }
+  .qa .q { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .qa .a { font-size: 14px; color: var(--text2); padding-left: 12px; border-left: 2px solid var(--border); }
+
+  /* ---- TOC ---- */
+  .toc {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+  }
+  .toc h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); margin-bottom: 0.75rem; }
+  .toc ol { padding-left: 1.2rem; }
+  .toc li { font-size: 14px; margin-bottom: 4px; }
+  .toc a  { color: var(--blue); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="tag">Resume Project Guide</div>
+    <h1>✈ Flight Price Tracker</h1>
+    <p>A complete SQL analytics project that scrapes real flight prices, stores them in a database, and answers business questions — from scratch, step by step.</p>
+    <div class="chips">
+      <span class="chip">Python</span>
+      <span class="chip">MySQL</span>
+      <span class="chip">BeautifulSoup</span>
+      <span class="chip">Tableau Public</span>
+      <span class="chip">GitHub</span>
+      <span class="chip">~2 weeks to build</span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#idea">What this project is</a></li>
+      <li><a href="#tools">Tools you need</a></li>
+      <li><a href="#database">Setting up the database</a></li>
+      <li><a href="#scraper">Writing the scraper</a></li>
+      <li><a href="#queries">Writing the SQL queries</a></li>
+      <li><a href="#schedule">Running it automatically</a></li>
+      <li><a href="#visualise">Visualising the data</a></li>
+      <li><a href="#github">Putting it on GitHub</a></li>
+      <li><a href="#resume">How to write it on your resume</a></li>
+      <li><a href="#interview">Interview Q&amp;A prep</a></li>
+    </ol>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section-label" id="idea">
+    <div class="section-num">1</div>
+    <h2>What this project is</h2>
+  </div>
+
+  <div class="card">
+    <h3>The simple idea</h3>
+    <p>Flight prices change every few hours. You write a Python script that visits a website, reads the price of a flight (say, Bangalore → Delhi), and saves it to a database. You do this every day for a few weeks.</p>
+    <p>After collecting data, you write SQL queries to answer questions like: <em>Which day of the week is cheapest to fly? How far in advance should I book? Do prices spike on weekends?</em></p>
+    <p>That's it. The result is a real dataset, real insights, and 4–5 impressive SQL queries that prove you can think like a data analyst.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>What you will build</h3>
+      <p>A MySQL database with 4 tables, a Python scraper that runs daily, and a set of queries using window functions, CTEs, and GROUP BY that produce business insights.</p>
+    </div>
+    <div class="card">
+      <h3>Why it stands out</h3>
+      <p>Most SQL projects use downloaded CSV files. This project generates its own real data over time, which means you can say "I collected 2,000+ price snapshots over 3 weeks" — that is unique.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body"><strong>Time estimate:</strong> Set up takes 1–2 days. Then let it collect data for 2–3 weeks while you do other things. Come back and write the queries. Total active effort: ~15–20 hours.</div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section-label" id="tools">
+    <div class="section-num">2</div>
+    <h2>Tools you need</h2>
+  </div>
+
+  <div class="card">
+    <p>Everything below is free. Install them in this order.</p>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>Tool</th><th>What it does</th><th>How to get it</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Python 3.10+</td><td>Run your scraper script</td><td>python.org → Download</td></tr>
+      <tr><td>MySQL 8.0</td><td>Store all price data</td><td>dev.mysql.com → MySQL Community Server</td></tr>
+      <tr><td>MySQL Workbench</td><td>Visual tool to write &amp; run SQL</td><td>Comes with MySQL installer</td></tr>
+      <tr><td>requests</td><td>Python library to load web pages</td><td><code>pip install requests</code></td></tr>
+      <tr><td>beautifulsoup4</td><td>Read flight prices from HTML</td><td><code>pip install beautifulsoup4</code></td></tr>
+      <tr><td>mysql-connector-python</td><td>Connect Python to MySQL</td><td><code>pip install mysql-connector-python</code></td></tr>
+      <tr><td>Tableau Public</td><td>Free charts for your dashboard</td><td>public.tableau.com</td></tr>
+      <tr><td>Git + GitHub</td><td>Host your project</td><td>github.com</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body"><strong>Quick install command:</strong> Open your terminal and run <code>pip install requests beautifulsoup4 mysql-connector-python</code> — that installs all three Python libraries at once.</div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section-label" id="database">
+    <div class="section-num">3</div>
+    <h2>Setting up the database</h2>
+  </div>
+
+  <div class="card">
+    <h3>Open MySQL Workbench and run this SQL</h3>
+    <p>Copy the entire block below and run it. It creates the database and all 4 tables.</p>
+  </div>
+
+  <div class="file-label">📄 setup_database.sql</div>
+  <div class="code-block"><span class="cm">-- Step 1: Create the database</span>
+<span class="kw">CREATE DATABASE IF NOT EXISTS</span> flight_tracker;
+<span class="kw">USE</span> flight_tracker;
+
+<span class="cm">-- Table 1: Routes (BLR→DEL, BOM→HYD, etc.)</span>
+<span class="kw">CREATE TABLE</span> routes (
+  route_id      <span class="fn">INT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  origin        <span class="fn">CHAR</span>(3) <span class="kw">NOT NULL</span>,   <span class="cm">-- airport code, e.g. 'BLR'</span>
+  destination   <span class="fn">CHAR</span>(3) <span class="kw">NOT NULL</span>,   <span class="cm">-- airport code, e.g. 'DEL'</span>
+  distance_km   <span class="fn">INT</span>,
+  <span class="kw">UNIQUE</span>(origin, destination)
+);
+
+<span class="cm">-- Table 2: Flights (each specific flight on a date)</span>
+<span class="kw">CREATE TABLE</span> flights (
+  flight_id       <span class="fn">INT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  route_id        <span class="fn">INT</span>,
+  airline         <span class="fn">VARCHAR</span>(50),
+  flight_number   <span class="fn">VARCHAR</span>(10),
+  departure_date  <span class="fn">DATE</span>,
+  departure_time  <span class="fn">TIME</span>,
+  duration_min    <span class="fn">INT</span>,
+  stops           <span class="fn">TINYINT</span> <span class="kw">DEFAULT</span> 0,      <span class="cm">-- 0 = direct, 1 = 1 stop</span>
+  <span class="kw">FOREIGN KEY</span>(route_id) <span class="kw">REFERENCES</span> routes(route_id)
+);
+
+<span class="cm">-- Table 3: Price snapshots (the main table — price at each point in time)</span>
+<span class="kw">CREATE TABLE</span> price_snapshots (
+  snapshot_id   <span class="fn">INT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  flight_id     <span class="fn">INT</span>,
+  scraped_at    <span class="fn">DATETIME</span> <span class="kw">DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  price_inr     <span class="fn">DECIMAL</span>(10,2),
+  seats_left    <span class="fn">TINYINT</span>,                 <span class="cm">-- urgency signal from website</span>
+  class         <span class="fn">ENUM</span>(<span class="st">'economy'</span>,<span class="st">'business'</span>) <span class="kw">DEFAULT</span> <span class="st">'economy'</span>,
+  <span class="kw">FOREIGN KEY</span>(flight_id) <span class="kw">REFERENCES</span> flights(flight_id)
+);
+
+<span class="cm">-- Table 4: Price alerts (bonus feature — track when price drops)</span>
+<span class="kw">CREATE TABLE</span> price_alerts (
+  alert_id        <span class="fn">INT</span> <span class="kw">AUTO_INCREMENT PRIMARY KEY</span>,
+  route_id        <span class="fn">INT</span>,
+  threshold_inr   <span class="fn">DECIMAL</span>(10,2),
+  triggered_at    <span class="fn">DATETIME</span> <span class="kw">DEFAULT NULL</span>,   <span class="cm">-- NULL means not triggered yet</span>
+  <span class="kw">FOREIGN KEY</span>(route_id) <span class="kw">REFERENCES</span> routes(route_id)
+);
+
+<span class="cm">-- Insert your routes</span>
+<span class="kw">INSERT INTO</span> routes (origin, destination, distance_km) <span class="kw">VALUES</span>
+  (<span class="st">'BLR'</span>, <span class="st">'DEL'</span>, 1740),
+  (<span class="st">'BLR'</span>, <span class="st">'BOM'</span>, 840),
+  (<span class="st">'DEL'</span>, <span class="st">'CCU'</span>, 1305),
+  (<span class="st">'BOM'</span>, <span class="st">'HYD'</span>, 620);</div>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body"><strong>Check it worked:</strong> In MySQL Workbench, run <code>SHOW TABLES;</code> — you should see 4 tables listed.</div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section-label" id="scraper">
+    <div class="section-num">4</div>
+    <h2>Writing the scraper</h2>
+  </div>
+
+  <div class="card">
+    <h3>How scraping works (simply)</h3>
+    <p>Your Python script pretends to be a browser. It requests the MakeMyTrip search page, gets the HTML back, finds the price numbers in the HTML, and saves them to your database.</p>
+    <p>The tricky part is that many travel sites block scrapers. The recommended approach for beginners is to use a public API alternative or to scrape Google Flights via SerpAPI (has a free tier).</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body"><strong>Beginner-friendly alternative:</strong> Use the <strong>Aviationstack API</strong> (free plan: 500 calls/month) or <strong>SerpAPI</strong> (100 free searches/month) to get real flight data without fighting anti-scraping systems. Sign up at aviationstack.com or serpapi.com and get a free API key.</div>
+  </div>
+
+  <div class="file-label">📄 scraper.py</div>
+  <div class="code-block"><span class="py">import</span> requests
+<span class="py">import</span> mysql.connector
+<span class="py">from</span> datetime <span class="py">import</span> datetime, date, timedelta
+<span class="py">import</span> time
+<span class="py">import</span> random
+
+<span class="cm"># ── CONFIG ────────────────────────────────────────────────────────</span>
+DB_CONFIG = {
+    <span class="st">'host'</span>:     <span class="st">'localhost'</span>,
+    <span class="st">'user'</span>:     <span class="st">'root'</span>,
+    <span class="st">'password'</span>: <span class="st">'your_password_here'</span>,  <span class="cm"># change this</span>
+    <span class="st">'database'</span>: <span class="st">'flight_tracker'</span>
+}
+
+SERPAPI_KEY = <span class="st">'your_serpapi_key_here'</span>   <span class="cm"># get free key at serpapi.com</span>
+
+<span class="cm"># Routes to track: (route_id, origin, destination)</span>
+ROUTES = [
+    (1, <span class="st">'BLR'</span>, <span class="st">'DEL'</span>),
+    (2, <span class="st">'BLR'</span>, <span class="st">'BOM'</span>),
+    (3, <span class="st">'DEL'</span>, <span class="st">'CCU'</span>),
+]
+
+<span class="cm"># ── DATABASE CONNECTION ───────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">get_connection</span>():
+    <span class="kw">return</span> mysql.connector.connect(**DB_CONFIG)
+
+<span class="cm"># ── GET FLIGHT DATA FROM SERPAPI ──────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">fetch_flights</span>(origin, destination, travel_date):
+    <span class="st">"""Call SerpAPI Google Flights endpoint and return list of flights."""</span>
+    url = <span class="st">"https://serpapi.com/search"</span>
+    params = {
+        <span class="st">"engine"</span>:         <span class="st">"google_flights"</span>,
+        <span class="st">"departure_id"</span>:   origin,
+        <span class="st">"arrival_id"</span>:     destination,
+        <span class="st">"outbound_date"</span>:  travel_date.strftime(<span class="st">"%Y-%m-%d"</span>),
+        <span class="st">"currency"</span>:       <span class="st">"INR"</span>,
+        <span class="st">"hl"</span>:             <span class="st">"en"</span>,
+        <span class="st">"api_key"</span>:        SERPAPI_KEY,
+    }
+    response = requests.get(url, params=params, timeout=15)
+    data = response.json()
+    results = []
+    <span class="kw">for</span> flight <span class="kw">in</span> data.get(<span class="st">"best_flights"</span>, []):
+        <span class="kw">for</span> leg <span class="kw">in</span> flight.get(<span class="st">"flights"</span>, []):
+            results.append({
+                <span class="st">"airline"</span>:        leg.get(<span class="st">"airline"</span>, <span class="st">""</span>),
+                <span class="st">"flight_number"</span>:  leg.get(<span class="st">"flight_number"</span>, <span class="st">""</span>),
+                <span class="st">"departure_time"</span>: leg.get(<span class="st">"departure_airport"</span>, {}).get(<span class="st">"time"</span>, <span class="st">"00:00"</span>),
+                <span class="st">"duration_min"</span>:   leg.get(<span class="st">"duration"</span>, 0),
+                <span class="st">"price_inr"</span>:      flight.get(<span class="st">"price"</span>, 0),
+            })
+    <span class="kw">return</span> results
+
+<span class="cm"># ── SAVE TO DATABASE ──────────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">save_snapshot</span>(conn, route_id, travel_date, flight_data):
+    cursor = conn.cursor()
+    <span class="cm"># 1. Insert into flights (or get existing flight_id)</span>
+    cursor.execute(<span class="st">"""
+        INSERT IGNORE INTO flights
+          (route_id, airline, flight_number, departure_date, departure_time, duration_min)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """</span>, (
+        route_id,
+        flight_data[<span class="st">'airline'</span>],
+        flight_data[<span class="st">'flight_number'</span>],
+        travel_date,
+        flight_data[<span class="st">'departure_time'</span>],
+        flight_data[<span class="st">'duration_min'</span>]
+    ))
+
+    cursor.execute(<span class="st">"""
+        SELECT flight_id FROM flights
+        WHERE route_id=%s AND flight_number=%s AND departure_date=%s
+    """</span>, (route_id, flight_data[<span class="st">'flight_number'</span>], travel_date))
+    row = cursor.fetchone()
+    <span class="kw">if not</span> row:
+        <span class="kw">return</span>
+    flight_id = row[0]
+
+    <span class="cm"># 2. Insert price snapshot</span>
+    cursor.execute(<span class="st">"""
+        INSERT INTO price_snapshots (flight_id, price_inr)
+        VALUES (%s, %s)
+    """</span>, (flight_id, flight_data[<span class="st">'price_inr'</span>]))
+    conn.commit()
+    cursor.close()
+
+<span class="cm"># ── MAIN LOOP ─────────────────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">main</span>():
+    conn = get_connection()
+    print(<span class="st">f"[{datetime.now()}] Starting scrape..."</span>)
+
+    <span class="kw">for</span> route_id, origin, dest <span class="kw">in</span> ROUTES:
+        <span class="cm"># Check flights 7, 14, 21, 30 days from today</span>
+        <span class="kw">for</span> days_ahead <span class="kw">in</span> [7, 14, 21, 30]:
+            travel_date = date.today() + timedelta(days=days_ahead)
+            <span class="kw">try</span>:
+                flights = fetch_flights(origin, dest, travel_date)
+                <span class="kw">for</span> f <span class="kw">in</span> flights[:5]:   <span class="cm"># save top 5 flights per route</span>
+                    save_snapshot(conn, route_id, travel_date, f)
+                print(<span class="st">f"  ✓ {origin}→{dest} ({days_ahead}d) — {len(flights)} flights saved"</span>)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                print(<span class="st">f"  ✗ {origin}→{dest} error: {e}"</span>)
+            time.sleep(random.uniform(1.5, 3))   <span class="cm"># be polite, don't hammer the API</span>
+
+    conn.close()
+    print(<span class="st">"Done!"</span>)
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    main()</div>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body"><strong>Test it:</strong> Replace your credentials and API key, then run <code>python scraper.py</code>. Check MySQL Workbench: run <code>SELECT * FROM price_snapshots LIMIT 10;</code> to see your first rows.</div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="section-label" id="queries">
+    <div class="section-num">5</div>
+    <h2>Writing the SQL queries</h2>
+  </div>
+
+  <div class="card">
+    <p>These are the 5 queries you will put in your README and talk about in interviews. Each one answers a real question. Write them in MySQL Workbench and save the screenshots.</p>
+  </div>
+
+  <div class="card">
+    <h3>Query 1 — Cheapest day to fly (GROUP BY + RANK)</h3>
+    <p>Answers: "If I fly on a Tuesday vs a Friday, how much do I save?"</p>
+  </div>
+  <div class="code-block"><span class="kw">SELECT</span>
+  r.origin,
+  r.destination,
+  <span class="fn">DAYNAME</span>(f.departure_date)           <span class="kw">AS</span> day_of_week,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(p.price_inr), 0)          <span class="kw">AS</span> avg_price_inr,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> r.route_id
+    <span class="kw">ORDER BY</span>     <span class="fn">AVG</span>(p.price_inr) <span class="kw">ASC</span>
+  )                                    <span class="kw">AS</span> cheapest_rank
+<span class="kw">FROM</span>  price_snapshots p
+<span class="kw">JOIN</span>  flights f  <span class="kw">ON</span> p.flight_id = f.flight_id
+<span class="kw">JOIN</span>  routes  r  <span class="kw">ON</span> f.route_id  = r.route_id
+<span class="kw">GROUP BY</span> r.route_id, <span class="fn">DAYOFWEEK</span>(f.departure_date)
+<span class="kw">ORDER BY</span> r.route_id, cheapest_rank;</div>
+
+  <div class="card" style="margin-top:1rem;">
+    <h3>Query 2 — Best time to book in advance (CTE + DATEDIFF)</h3>
+    <p>Answers: "Does booking 3 weeks early actually save money vs booking last minute?"</p>
+  </div>
+  <div class="code-block"><span class="kw">WITH</span> booking_gap <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    f.route_id,
+    <span class="fn">DATEDIFF</span>(f.departure_date, p.scraped_at)  <span class="kw">AS</span> days_ahead,
+    p.price_inr
+  <span class="kw">FROM</span>  price_snapshots p
+  <span class="kw">JOIN</span>  flights f <span class="kw">ON</span> p.flight_id = f.flight_id
+  <span class="kw">WHERE</span> <span class="fn">DATEDIFF</span>(f.departure_date, p.scraped_at) <span class="kw">BETWEEN</span> 1 <span class="kw">AND</span> 90
+)
+<span class="kw">SELECT</span>
+  route_id,
+  <span class="fn">FLOOR</span>(days_ahead / 7) * 7            <span class="kw">AS</span> week_bucket,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(price_inr), 0)             <span class="kw">AS</span> avg_price,
+  <span class="fn">COUNT</span>(*)                              <span class="kw">AS</span> data_points
+<span class="kw">FROM</span>  booking_gap
+<span class="kw">GROUP BY</span> route_id, week_bucket
+<span class="kw">ORDER BY</span> route_id, week_bucket;</div>
+
+  <div class="card" style="margin-top:1rem;">
+    <h3>Query 3 — 7-day rolling average price (Window function)</h3>
+    <p>Answers: "Is the price trending up or down this week?"</p>
+  </div>
+  <div class="code-block"><span class="kw">SELECT</span>
+  f.route_id,
+  <span class="fn">DATE</span>(p.scraped_at)                    <span class="kw">AS</span> snapshot_date,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(p.price_inr), 0)           <span class="kw">AS</span> daily_avg,
+  <span class="fn">ROUND</span>(
+    <span class="fn">AVG</span>(<span class="fn">AVG</span>(p.price_inr)) <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> f.route_id
+      <span class="kw">ORDER BY</span>     <span class="fn">DATE</span>(p.scraped_at)
+      <span class="kw">ROWS BETWEEN</span> 6 <span class="kw">PRECEDING AND CURRENT ROW</span>
+    ), 0)                                <span class="kw">AS</span> rolling_7d_avg
+<span class="kw">FROM</span>  price_snapshots p
+<span class="kw">JOIN</span>  flights f <span class="kw">ON</span> p.flight_id = f.flight_id
+<span class="kw">GROUP BY</span> f.route_id, snapshot_date
+<span class="kw">ORDER BY</span> f.route_id, snapshot_date;</div>
+
+  <div class="card" style="margin-top:1rem;">
+    <h3>Query 4 — Sudden price spike detection (Self JOIN)</h3>
+    <p>Answers: "Which flights jumped more than 20% since yesterday?"</p>
+  </div>
+  <div class="code-block"><span class="kw">SELECT</span>
+  p.flight_id,
+  p.scraped_at                           <span class="kw">AS</span> now,
+  prev.scraped_at                        <span class="kw">AS</span> previous,
+  p.price_inr                            <span class="kw">AS</span> current_price,
+  prev.price_inr                         <span class="kw">AS</span> previous_price,
+  <span class="fn">ROUND</span>((p.price_inr - prev.price_inr)
+        / prev.price_inr * 100, 1)       <span class="kw">AS</span> pct_change
+<span class="kw">FROM</span> price_snapshots p
+<span class="kw">JOIN</span> price_snapshots prev
+  <span class="kw">ON</span>  prev.flight_id  = p.flight_id
+  <span class="kw">AND</span> prev.scraped_at = (
+      <span class="kw">SELECT MAX</span>(scraped_at)
+      <span class="kw">FROM</span>  price_snapshots
+      <span class="kw">WHERE</span> flight_id  = p.flight_id
+        <span class="kw">AND</span> scraped_at &lt; p.scraped_at
+  )
+<span class="kw">WHERE</span> p.price_inr &gt; prev.price_inr * 1.20
+<span class="kw">ORDER BY</span> pct_change <span class="kw">DESC</span>;</div>
+
+  <div class="card" style="margin-top:1rem;">
+    <h3>Query 5 — Direct vs connecting flight price gap</h3>
+    <p>Answers: "How much extra does the direct flight cost vs a 1-stop?"</p>
+  </div>
+  <div class="code-block"><span class="kw">SELECT</span>
+  r.origin, r.destination,
+  f.stops,
+  <span class="fn">COUNT</span>(*)                              <span class="kw">AS</span> flight_count,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(p.price_inr), 0)           <span class="kw">AS</span> avg_price,
+  <span class="fn">ROUND</span>(<span class="fn">MIN</span>(p.price_inr), 0)           <span class="kw">AS</span> min_price,
+  <span class="fn">ROUND</span>(<span class="fn">MAX</span>(p.price_inr), 0)           <span class="kw">AS</span> max_price
+<span class="kw">FROM</span>  price_snapshots p
+<span class="kw">JOIN</span>  flights f <span class="kw">ON</span> p.flight_id = f.flight_id
+<span class="kw">JOIN</span>  routes  r <span class="kw">ON</span> f.route_id  = r.route_id
+<span class="kw">GROUP BY</span> r.route_id, f.stops
+<span class="kw">ORDER BY</span> r.route_id, f.stops;</div>
+
+  <!-- SECTION 6 -->
+  <div class="section-label" id="schedule">
+    <div class="section-num">6</div>
+    <h2>Running it automatically every day</h2>
+  </div>
+
+  <div class="card">
+    <p>You do not want to run the script manually every day. Set up a scheduler to run it for you automatically.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>On Windows — Task Scheduler</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-head"><div class="step-dot">1</div><h4>Open Task Scheduler</h4></div>
+          <p>Search "Task Scheduler" in the Start menu</p>
+        </div>
+        <div class="step">
+          <div class="step-head"><div class="step-dot">2</div><h4>Create Basic Task</h4></div>
+          <p>Click "Create Basic Task" in the right panel</p>
+        </div>
+        <div class="step">
+          <div class="step-head"><div class="step-dot">3</div><h4>Set trigger to Daily</h4></div>
+          <p>Choose "Daily" → set time to 9:00 AM</p>
+        </div>
+        <div class="step">
+          <div class="step-head"><div class="step-dot">4</div><h4>Set action</h4></div>
+          <p>Action: Start a program → browse to <code>python.exe</code> → add argument: full path to <code>scraper.py</code></p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>On Mac/Linux — Cron Job</h3>
+      <p style="margin-bottom:0.75rem;">Open your terminal and type <code>crontab -e</code>, then add this line:</p>
+      <div class="code-block" style="margin:0;font-size:12px;">0 9 * * * /usr/bin/python3 /path/to/scraper.py >> /tmp/flight_log.txt 2>&1</div>
+      <p style="margin-top:0.75rem;font-size:13px;">This runs the scraper at 9 AM every day and saves output to a log file so you can check it ran correctly.</p>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body"><strong>Check progress:</strong> After 3 days, run <code>SELECT COUNT(*) FROM price_snapshots;</code> in MySQL Workbench. You should see at least 30–50 rows. After 3 weeks you will have 300–600+ rows — enough to run all your queries with meaningful results.</div>
+  </div>
+
+  <!-- SECTION 7 -->
+  <div class="section-label" id="visualise">
+    <div class="section-num">7</div>
+    <h2>Visualising the data</h2>
+  </div>
+
+  <div class="card">
+    <h3>Export from MySQL → Import to Tableau Public (free)</h3>
+    <p>Tableau Public is a free tool that makes professional charts. Here is how to connect your data to it.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-head"><div class="step-dot">1</div><h4>Export data as CSV from MySQL Workbench</h4></div>
+      <p>Run <code>SELECT * FROM price_snapshots JOIN flights USING(flight_id) JOIN routes USING(route_id);</code> → right-click the result → Export → Save as <code>flight_data.csv</code></p>
+    </div>
+    <div class="step">
+      <div class="step-head"><div class="step-dot">2</div><h4>Open Tableau Public — connect to CSV</h4></div>
+      <p>Open Tableau Public → "Connect to Data" → "Text file" → select your CSV file</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><div class="step-dot">3</div><h4>Build Chart 1: Price trend over time</h4></div>
+      <p>Drag <code>scraped_at</code> to Columns, <code>price_inr</code> (AVG) to Rows, <code>origin+destination</code> to Color. You get a line chart per route.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><div class="step-dot">4</div><h4>Build Chart 2: Cheapest day heatmap</h4></div>
+      <p>Drag <code>WEEKDAY(departure_date)</code> to Columns, <code>price_inr</code> (AVG) to Rows. Change mark type to "Bar". Colour by price.</p>
+    </div>
+    <div class="step">
+      <div class="step-head"><div class="step-dot">5</div><h4>Publish to Tableau Public</h4></div>
+      <p>File → "Save to Tableau Public" — creates a public link you can put in your resume and GitHub README.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 8 -->
+  <div class="section-label" id="github">
+    <div class="section-num">8</div>
+    <h2>Putting it on GitHub</h2>
+  </div>
+
+  <div class="card">
+    <p>The GitHub README is what recruiters actually read. It should tell a story: problem → approach → results. Here is the exact structure to follow.</p>
+  </div>
+
+  <div class="tree">
+    <span class="dir">flight-price-tracker/</span><br>
+    &nbsp;&nbsp;├── <span class="file">README.md</span>          <span class="note">← most important file, write it well</span><br>
+    &nbsp;&nbsp;├── <span class="file">setup_database.sql</span> <span class="note">← the CREATE TABLE script</span><br>
+    &nbsp;&nbsp;├── <span class="file">scraper.py</span>         <span class="note">← the Python scraper</span><br>
+    &nbsp;&nbsp;├── <span class="dir">queries/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">01_cheapest_day.sql</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">02_advance_booking.sql</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">03_rolling_average.sql</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="file">04_price_spikes.sql</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="file">05_direct_vs_stop.sql</span><br>
+    &nbsp;&nbsp;├── <span class="dir">screenshots/</span>       <span class="note">← query result screenshots</span><br>
+    &nbsp;&nbsp;└── <span class="file">sample_data.csv</span>    <span class="note">← 50 rows so recruiters can test it</span>
+  </div>
+
+  <div class="card" style="margin-top:1rem;">
+    <h3>README.md structure (copy this template)</h3>
+  </div>
+  <div class="code-block"><span class="cm"># Flight Price Tracker — SQL Analytics Project</span>
+
+<span class="cm">## Problem</span>
+Flight prices on BLR→DEL change 3–4x per day. This project answers:
+- Which day of the week is cheapest to fly?
+- How far in advance should you book for the best price?
+- When do prices spike suddenly?
+
+<span class="cm">## What I built</span>
+- Python scraper that collects prices for 4 routes daily via SerpAPI
+- MySQL database with 4 normalized tables (flights, routes, snapshots, alerts)
+- 5 SQL queries using CTEs, window functions, and self-joins
+- Tableau dashboard: [link here]
+
+<span class="cm">## Key findings (BLR → DEL)</span>
+| Insight | Result |
+|---|---|
+| Cheapest day to fly | Tuesday (avg ₹4,100) |
+| Most expensive day  | Friday (avg ₹5,800) |
+| Best booking window | 3–4 weeks ahead saves 34% |
+| Direct vs 1-stop    | Direct costs +18% more |
+
+<span class="cm">## Tech stack</span>
+Python · MySQL · BeautifulSoup · SerpAPI · Tableau Public
+
+<span class="cm">## How to run</span>
+1. Run setup_database.sql in MySQL Workbench
+2. Add your SerpAPI key to scraper.py
+3. Run python scraper.py
+4. Schedule with Task Scheduler (Windows) or cron (Mac/Linux)</div>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body"><strong>Put the Tableau link in your README.</strong> Recruiters love clicking a live dashboard. Even a simple 2-chart Tableau Public workbook makes your project feel complete and professional.</div>
+  </div>
+
+  <!-- SECTION 9 -->
+  <div class="section-label" id="resume">
+    <div class="section-num">9</div>
+    <h2>How to write it on your resume</h2>
+  </div>
+
+  <div class="card">
+    <h3>Formula: Action → Tool → Result</h3>
+    <p>Every resume bullet must follow this formula. Here are ready-to-copy bullets you can paste directly into your resume.</p>
+  </div>
+
+  <div class="callout resume">
+    <span class="callout-icon">📄</span>
+    <div class="callout-body">
+      <strong>Resume bullets (copy these):</strong><br><br>
+      • Built a flight price tracker that scraped 2,400+ price snapshots across 4 routes over 3 weeks using Python and SerpAPI<br><br>
+      • Designed a normalised MySQL schema (4 tables, FK relationships) to store flights, routes, and time-series price data<br><br>
+      • Wrote 5 analytical SQL queries using CTEs, RANK(), LAG(), and rolling window functions to surface pricing insights<br><br>
+      • Found that booking BLR→DEL flights 3–4 weeks in advance saves 34% vs last-minute — validated on real scraped data<br><br>
+      • Visualised trends in Tableau Public; dashboard available at [link]
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body"><strong>Common mistake:</strong> Do not just write "Built a flight price tracker using Python and SQL." That is vague and forgettable. Include the numbers — 2,400 rows, 4 routes, 34% savings, 3 weeks of data. Numbers make it real.</div>
+  </div>
+
+  <!-- SECTION 10 -->
+  <div class="section-label" id="interview">
+    <div class="section-num">10</div>
+    <h2>Interview Q&amp;A prep</h2>
+  </div>
+
+  <div class="card">
+    <p>These are the exact questions you will be asked. Read the answers, understand them, and put them in your own words.</p>
+  </div>
+
+  <div class="interview">
+    <h4>Questions you will be asked</h4>
+
+    <div class="qa">
+      <div class="q">Q: Walk me through your project.</div>
+      <div class="a">I built a system that tracks flight prices daily. A Python script calls the SerpAPI to get current prices for 4 routes, stores them in a MySQL database, and I let it run for 3 weeks. I then wrote SQL queries to find patterns — like which day is cheapest and how booking time affects price. The most interesting finding was that BLR→DEL prices on Fridays are 41% higher than Tuesdays.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: Why did you use a RANK() window function in Query 1?</div>
+      <div class="a">I wanted to rank the days of the week by average price within each route separately. If I ranked globally, the ranking would mix up routes with different base prices. PARTITION BY route_id means I get rank 1 (cheapest day) per route independently.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: What is a CTE and why did you use one in Query 2?</div>
+      <div class="a">A CTE (Common Table Expression) is like a temporary named result set. I used one to first calculate the days_ahead value for each snapshot, then group by week buckets in a second step. Without the CTE I would have to nest subqueries which is harder to read and debug.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: Why is your schema normalised into 4 tables instead of one big table?</div>
+      <div class="a">Because routes and flight details do not change every time I scrape a price. If I stored everything in one table, I would repeat "BLR→DEL, IndiGo, 6E-201" thousands of times. Normalisation avoids that duplication, makes updates easier, and keeps the price_snapshots table small and fast to query.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: What would you do differently if you did this project again?</div>
+      <div class="a">I would add an index on (flight_id, scraped_at) in price_snapshots, because Query 4 does a self-join on that table and it becomes slow as data grows. I would also collect the seats_left column more consistently — I dropped it sometimes when the API did not return it, which made that column unreliable for analysis.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: Is this data reliable for actual travel decisions?</div>
+      <div class="a">It is directionally reliable but not perfectly accurate — prices change by the minute and the API has some latency. The value is the trend analysis over weeks, not predicting the price at any single moment. For a resume project, the goal is showing I can collect, model, and query time-series data, which it does.</div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- CHECKLIST -->
+  <div class="section-label">
+    <div class="section-num" style="background:var(--green);">✓</div>
+    <h2>Final checklist before adding to resume</h2>
+  </div>
+
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>Item</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>setup_database.sql uploaded to GitHub</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>scraper.py on GitHub (with API key removed)</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>5 query .sql files in /queries folder</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>README with problem, findings, and Tableau link</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>At least 200+ rows in price_snapshots</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>Screenshots of query results saved in /screenshots</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>Tableau Public dashboard published with live link</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>Resume bullets include real numbers (rows, routes, % savings)</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>Can explain RANK(), CTE, self-JOIN in plain English</td><td><span class="badge badge-blue">to do</span></td></tr>
+        <tr><td>GitHub repo is public and link is in resume</td><td><span class="badge badge-blue">to do</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">🎯</span>
+    <div class="callout-body"><strong>The one thing that separates this from every other SQL project:</strong> You built the data yourself. Every other fresher downloaded a Kaggle CSV. You ran a scraper for 3 weeks and have real, original data with a real finding. That story is worth telling.</div>
+  </div>
+
+</div>
+</body>
+</html>
