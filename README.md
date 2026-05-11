@@ -40,7 +40,7 @@ A modern real-time flight price analytics dashboard built using Python, SQL, and
 ### Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/FlightLens-Price-Tracker.git
+git clone https://github.com/GTIKEA/FlightLens-Price-Tracker
 ```
 
 ### Open Dashboard
