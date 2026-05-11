@@ -33,15 +33,7 @@ A modern real-time flight price analytics dashboard built using Python, SQL, and
 - Data Tables
 - Price Alerts
 
-## 📁 Project Structure
 
-```bash
-frontend/   → Main dashboard
-docs/       → Full implementation guide
-sql/        → Database schema
-python/     → Data collection scripts
-screenshots/→ Dashboard previews
-```
 
 ## ⚡ Setup
 
@@ -53,9 +45,7 @@ git clone https://github.com/YOUR_USERNAME/FlightLens-Price-Tracker.git
 
 ### Open Dashboard
 
-```bash
-cd frontend
-```
+
 
 Open:
 
