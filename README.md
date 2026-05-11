@@ -2,7 +2,7 @@
 
 A modern real-time flight price analytics dashboard built using Python, SQL, and interactive frontend visualizations.
 
-## 🚀 Features
+##  Features
 
 - Real-time flight price tracking
 - Interactive dashboards
@@ -13,7 +13,7 @@ A modern real-time flight price analytics dashboard built using Python, SQL, and
 - Dark/Light theme support
 - Export functionality
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 - Python
 - MySQL
@@ -23,7 +23,7 @@ A modern real-time flight price analytics dashboard built using Python, SQL, and
 - SerpAPI
 - Tableau
 
-## 📊 Dashboard Modules
+##  Dashboard Modules
 
 - Price Trends
 - Booking Advance Analysis
@@ -35,7 +35,7 @@ A modern real-time flight price analytics dashboard built using Python, SQL, and
 
 
 
-## ⚡ Setup
+##  Setup
 
 ### Clone Repository
 
@@ -55,7 +55,7 @@ flight_price_tracker.html
 
 in browser.
 
-## 🧠 Key Concepts Demonstrated
+##  Key Concepts Demonstrated
 
 - Data Engineering
 - SQL Analytics
@@ -65,7 +65,7 @@ in browser.
 - Automation
 - Business Intelligence
 
-## 📌 Future Improvements
+##  Future Improvements
 
 - Live API integration
 - Kubernetes deployment
@@ -76,4 +76,4 @@ in browser.
 
 ## 👨‍💻 Author
 
-Gireesh Marusani
+Geethika Chowdary
